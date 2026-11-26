@@ -21,12 +21,15 @@ jobs:
           repository: teliti-dev/telemon
           ref: master
           path: telemon
+      - name: Add the WASM target
+        run: rustup target add wasm32-unknown-unknown
       - name: Build tmx
         run: cargo build --release --manifest-path telemon/crates/telemon-ext/Cargo.toml --bin tmx
       - name: Pack, sign and build the catalogue
         env:
           TMX_SIGNING_KEY: ${{ secrets.TMX_SIGNING_KEY }}
           TMX: ${{ github.workspace }}/telemon/crates/telemon-ext/target/release/tmx
+          TELEMON_DIR: ${{ github.workspace }}/telemon
         run: scripts/build.sh
       - name: Attach to the release
         if: github.event_name == 'release'
