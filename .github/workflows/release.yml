@@ -21,6 +21,7 @@ jobs:
           repository: teliti-dev/telemon
           ref: master
           path: telemon
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
       - name: Add the WASM target
         run: rustup target add wasm32-unknown-unknown
       - name: Build tmx
