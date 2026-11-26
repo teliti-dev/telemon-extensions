@@ -1,9 +1,10 @@
 {
   "id": "net.teliti.terminal",
   "name": "Router terminal (SSH)",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "apiVersion": 1,
   "publisher": "Teliti",
+  "license": {"kind": "open-source", "spdx": "AGPL-3.0-only", "url": "https://github.com/teliti-dev/telemon-extensions/blob/main/LICENSE", "summary": "Open source (AGPL-3.0). Free to use. Official extension by Teliti."},
   "description": "SSH terminal to your routers, opened from a router's action menu in a bottom panel with tabs. Uses the router account Telemon already stores and pins each router's host key.",
   "telemon": ">=0.1.0",
   "ui": {
