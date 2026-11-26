@@ -1,0 +1,23 @@
+{
+  "id": "net.teliti.router-health",
+  "name": "Router health",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "publisher": "Teliti",
+  "description": "CPU, memory, uptime and version of every router, with a short history sampled every minute.",
+  "telemon": ">=0.1.0",
+  "ui": { "entry": "ui/index.js" },
+  "backend": { "entry": "backend.wasm" },
+  "contributes": {
+    "widgets": [{ "type": "worst-cpu", "title": "Busiest router", "description": "The router with the highest CPU load right now." }],
+    "pages": [{ "id": "home", "title": "Router health", "kind": "dashboard" }],
+    "routes": [
+      { "id": "status", "method": "GET", "path": "/status" },
+      { "id": "history", "method": "GET", "path": "/history" }
+    ],
+    "workers": [{ "id": "sample", "everySeconds": 60 }]
+  },
+  "permissions": [
+    { "id": "data.routers", "required": true, "sensitive": true, "description": "Read router resources (CPU, memory, uptime, version) through the read-only API paths." }
+  ]
+}

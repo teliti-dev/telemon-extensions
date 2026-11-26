@@ -13,10 +13,17 @@ scripts/build.sh                pack, sign, build dist/catalog.json and dist/cat
 scripts/gen-signing-key.sh      one-time: create the signing key and store it as the Actions secret
 ```
 
+## Extensions
+- `net.teliti.hello`: UI-only example (widget and page).
+- `net.teliti.router-health`: a Rust backend compiled to WASM with the Telemon SDK. Reads `/system/resource` of every router, keeps a short CPU/memory history (worker every 60 s, own key-value store) and shows it on a page and a widget.
+
+## Writing a backend
+A backend is a `cdylib` crate built for `wasm32-unknown-unknown` with `telemon-ext-guest` (see `extensions/net.teliti.router-health/backend`). Declare routes and workers in `manifest.json`; request the data you read as permissions (they start off when sensitive). The host API and its limits are described in ADR 0028.
+
 ## Build locally
 ```
 cargo build --release --manifest-path ../server/crates/telemon-ext/Cargo.toml --bin tmx
-TMX=../server/crates/telemon-ext/target/release/tmx TMX_SIGNING_KEY=<hex> scripts/build.sh
+TMX=../server/crates/telemon-ext/target/release/tmx TELEMON_DIR=../server TMX_SIGNING_KEY=<hex> scripts/build.sh
 ```
 The app trusts a package only when it is signed by a key pinned in `OFFICIAL_KEYS` of Telemon (or added by the server owner with `TELEMON_EXTENSIONS_OFFICIAL_KEYS`).
 

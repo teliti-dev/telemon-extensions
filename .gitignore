@@ -1,2 +1,4 @@
 dist/
 *.key
+stage/
+extensions/*/backend/target/
