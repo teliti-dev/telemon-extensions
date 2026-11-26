@@ -32,6 +32,15 @@ jobs:
           TMX: ${{ github.workspace }}/telemon/crates/telemon-ext/target/release/tmx
           TELEMON_DIR: ${{ github.workspace }}/telemon
         run: scripts/build.sh
+      - name: Show the public key that signed this release
+        env:
+          TMX_SIGNING_KEY: ${{ secrets.TMX_SIGNING_KEY }}
+          TMX: ${{ github.workspace }}/telemon/crates/telemon-ext/target/release/tmx
+        run: |
+          pub="$("$TMX" pubkey "$TMX_SIGNING_KEY")"
+          echo "### Signed with public key" >> "$GITHUB_STEP_SUMMARY"
+          echo "\`$pub\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "It must be listed in the Telemon variable TELEMON_OFFICIAL_EXT_KEYS, or the app will refuse these packages." >> "$GITHUB_STEP_SUMMARY"
       - name: Attach to the release
         if: github.event_name == 'release'
         env:
