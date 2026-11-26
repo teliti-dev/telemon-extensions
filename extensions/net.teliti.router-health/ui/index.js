@@ -71,6 +71,25 @@ export default {
       return h(Card, { "data-testid": "rh-widget" }, h(CardHeader, null, h(CardTitle, null, "Busiest router")), h(CardContent, null, body))
     }
 
+    // Tab panel: sumber daya satu router (dibuka dari menu aksi router).
+    function HealthTab({ params }) {
+      const s = useStatus()
+      const r = s.data && s.data.routers.find((x) => x.id === params.router)
+      if (s.error) return h("p", { className: "p-3 text-sm text-destructive" }, s.error)
+      if (!s.data) return h("p", { className: "p-3 text-sm text-muted-foreground" }, "…")
+      if (!r) return h("p", { className: "p-3 text-sm text-muted-foreground" }, "Router not found.")
+      if (r.error) return h("p", { className: "p-3 text-sm text-destructive" }, r.error)
+      const cell = (label, value) => h("div", { key: label, className: "rounded-lg border p-3" }, h("div", { className: "text-xs text-muted-foreground" }, label), h("div", { className: "text-lg font-semibold tabular-nums" }, value))
+      return h("div", { className: "grid gap-3 p-3", "data-testid": "rh-tab" },
+        h("div", { className: "grid grid-cols-2 gap-2 sm:grid-cols-4" }, cell("CPU", r.cpu == null ? "—" : r.cpu + "%"), cell("Memory", r.memoryPct == null ? "—" : r.memoryPct + "%"), cell("Uptime", r.uptime || "—"), cell("Version", r.version || "—")),
+        h("div", null, h("div", { className: "mb-1 text-xs text-muted-foreground" }, "CPU history"), h(Spark, { id: r.id })))
+    }
+    sdk.registerPanel({ id: "health", Component: HealthTab })
+    sdk.registerRouterAction({
+      id: "health",
+      disabled: () => (sdk.hasPermission("data.routers") ? null : "The permission data.routers is off (Settings > Extensions > Router health)."),
+      run: (r) => sdk.panel.open("health", { key: r.id, title: "Health · " + r.name, params: { router: r.id } }),
+    })
     sdk.registerWidget({ type: "worst-cpu", size: { w: 6, h: 36 }, Component: Worst })
     sdk.registerPage({ id: "home", Component: Page })
   },

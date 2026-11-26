@@ -73,12 +73,12 @@ export default {
           term.dispose()
         }
       }, [router])
-      return h("div", { className: "grid gap-2" },
+      return h("div", { className: "flex h-full flex-col gap-2 p-2" },
         h("div", { className: "flex items-center gap-2 text-sm" },
           h("strong", null, name),
           note && h("span", { className: "text-muted-foreground", "data-testid": "term-note" }, note),
-          h("button", { className: "ml-auto rounded-md border px-2 py-1 text-xs", onClick: onClose }, "Close")),
-        h("div", { ref: box, "data-testid": "term-box", style: { height: "60vh", background: "#000", padding: 6, borderRadius: 6 } }))
+          h("button", { className: "ml-auto rounded-md border px-2 py-1 text-xs", onClick: onClose }, "Close tab")),
+        h("div", { ref: box, "data-testid": "term-box", style: { flex: 1, minHeight: 0, background: "#000", padding: 6, borderRadius: 6 } }))
     }
 
     function Setup({ router, onReady, onBack }) {
@@ -112,7 +112,7 @@ export default {
       if (err) return h("p", { className: "text-sm text-destructive" }, err)
       if (!info) return h("p", { className: "text-sm text-muted-foreground" }, "…")
       const changed = info.pinned && info.presented && info.pinned !== info.presented
-      return h("div", { className: "grid gap-3 text-sm" },
+      return h("div", { className: "grid gap-3 p-3 text-sm" },
         h("div", null, h("strong", null, router.name), " · SSH port ",
           h("input", { type: "number", min: 1, max: 65535, value: port, className: "w-20 rounded-md border bg-background px-1", onChange: (e) => setPort(e.target.value), onBlur: () => Number(port) !== info.port && load(Number(port)) })),
         info.error && h("p", { className: "text-destructive" }, info.error),
@@ -130,39 +130,18 @@ export default {
           h("button", { className: "rounded-md border px-3 py-1", onClick: onBack }, "Back")))
     }
 
-    function Page() {
-      const [routers, setRouters] = useState(null)
-      const [err, setErr] = useState(null)
-      const [pick, setPick] = useState(null)
+    // Satu tab panel = satu router: langkah menyematkan kunci host lalu terminalnya.
+    function Tab({ params, close }) {
       const [live, setLive] = useState(false)
-      useEffect(() => {
-        getJson("/api/snapshot").then((d) => setRouters((d.routers || []).filter((r) => r.canWrite)), (e) => setErr(e.message))
-      }, [])
-      // Penjelasan sebelum mencoba: tanpa izin extension atau akses peran, sesi pasti ditolak server.
-      const notice = []
-      if (!sdk.hasPermission("feature.router-ssh")) {
-        notice.push(h("p", { key: "perm", className: "rounded-md border border-destructive/50 p-3 text-sm", "data-testid": "term-perm-off" },
-          "The permission ", h("code", null, "feature.router-ssh"), " is off, so terminals cannot open. An administrator turns it on in ",
-          h("a", { href: "#/pengaturan/extension/net.teliti.terminal", className: "underline" }, "Settings > Extensions > Router terminal > Permissions"), "."))
-      }
-      if (sdk.accessLevel !== "update" || !sdk.can("terminal")) {
-        notice.push(h("p", { key: "role", className: "rounded-md border border-destructive/50 p-3 text-sm", "data-testid": "term-role-off" },
-          "Your role is not allowed to open terminals. An administrator gives the role the Edit level and the “Open terminals” action in the extension's Role access."))
-      }
-      const body = () => {
-        if (err) return h("p", { className: "text-sm text-destructive" }, err)
-        if (!routers) return h("p", { className: "text-sm text-muted-foreground" }, "…")
-        if (pick && live) return h(Console, { router: pick.id, name: pick.name, onClose: () => setLive(false) })
-        if (pick) return h(Setup, { router: pick, onReady: () => setLive(true), onBack: () => setPick(null) })
-        if (routers.length === 0) return h("p", { className: "text-sm text-muted-foreground" }, "No router allows writing from Telemon. Terminals open only on routers with write access enabled.")
-        return h("ul", { className: "grid gap-2" }, routers.map((r) =>
-          h("li", { key: r.id, className: "flex items-center gap-2 rounded-lg border p-3 text-sm" },
-            h("strong", null, r.name), h("span", { className: "text-muted-foreground" }, r.status),
-            h("button", { className: "ml-auto rounded-md border px-3 py-1", onClick: () => setPick(r) }, "Connect"))))
-      }
-      return h(Card, null, h(CardHeader, null, h(CardTitle, null, "Router terminal (SSH)")), h(CardContent, { className: "grid gap-3" }, notice, body()))
+      const router = { id: String(params.router), name: String(params.name) }
+      return live ? h(Console, { router: router.id, name: router.name, onClose: close }) : h(Setup, { router, onReady: () => setLive(true), onBack: close })
     }
 
-    sdk.registerPage({ id: "home", Component: Page })
+    sdk.registerPanel({ id: "terminal", Component: Tab })
+    sdk.registerRouterAction({
+      id: "open",
+      disabled: (r) => (!sdk.hasPermission("feature.router-ssh") ? "The permission feature.router-ssh is off (Settings > Extensions > Router terminal)." : !r.canWrite ? "This router does not allow writing from Telemon, so terminals are off." : null),
+      run: (r) => sdk.panel.open("terminal", { key: r.id, title: "SSH · " + r.name, params: { router: r.id, name: r.name } }),
+    })
   },
 }
