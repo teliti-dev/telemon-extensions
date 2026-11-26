@@ -17,6 +17,8 @@ scripts/gen-signing-key.sh      one-time: create the signing key and store it as
 - `net.teliti.hello`: UI-only example (widget and page).
 - `net.teliti.router-health`: a Rust backend compiled to WASM with the Telemon SDK. Reads `/system/resource` of every router, keeps a short CPU/memory history (worker every 60 s, own key-value store) and shows it on a page and a widget.
 
+- `net.teliti.terminal`: SSH terminal to routers in the browser (xterm.js bundled with bun). The Telemon core holds the SSH session and the host-key pin; this extension is the UI. Needs the sensitive permission `feature.router-ssh` and the `terminal` action; routers must allow writing from Telemon. See ADR 0029.
+
 ## Writing a backend
 A backend is a `cdylib` crate built for `wasm32-unknown-unknown` with `telemon-ext-guest` (see `extensions/net.teliti.router-health/backend`). Declare routes and workers in `manifest.json`; request the data you read as permissions (they start off when sensitive). The host API and its limits are described in ADR 0028.
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Pack and sign every extension and build the signed store catalogue into dist/.
 #   TMX=<path to tmx> TMX_SIGNING_KEY=<private key hex> [TELEMON_DIR=<telemon checkout>] scripts/build.sh
-# Backends need: rustup target add wasm32-unknown-unknown
+# Backends need: rustup target add wasm32-unknown-unknown. UIs with dependencies need bun.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 tmx="${TMX:?set TMX to the tmx binary (cargo build -p telemon-ext --bin tmx in the telemon repository)}"
@@ -14,6 +14,12 @@ for dir in extensions/*/; do
   mkdir "stage/$id"
   cp "$dir/manifest.json" "stage/$id/"
   for part in ui migrations; do [ -d "$dir/$part" ] && cp -r "$dir/$part" "stage/$id/"; done
+  # UI written with dependencies (ui-src/ + package.json): bundle to a single ES module with bun.
+  if [ -f "$dir/ui-src/index.js" ]; then
+    (cd "$dir" && bun install --frozen-lockfile)
+    mkdir -p "stage/$id/ui"
+    bun build "$dir/ui-src/index.js" --outfile "stage/$id/ui/index.js" --format esm --minify --target browser
+  fi
   if [ -f "$dir/backend/Cargo.toml" ]; then
     cargo_args=(build --release --locked --target wasm32-unknown-unknown --manifest-path "$dir/backend/Cargo.toml")
     if [ -n "${TELEMON_DIR:-}" ]; then

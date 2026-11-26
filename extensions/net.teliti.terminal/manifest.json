@@ -1,0 +1,20 @@
+{
+  "id": "net.teliti.terminal",
+  "name": "Router terminal (SSH)",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "publisher": "Teliti",
+  "description": "SSH terminal to your routers from the browser. Uses the router account Telemon already stores and pins each router's host key.",
+  "telemon": ">=0.1.0",
+  "ui": { "entry": "ui/index.js" },
+  "contributes": {
+    "pages": [{ "id": "home", "title": "Terminal", "kind": "dashboard" }],
+    "sessions": [{ "id": "ssh", "kind": "router-ssh", "action": "terminal" }]
+  },
+  "actions": [
+    { "id": "terminal", "label": "Open terminals", "level": "update", "description": "Open an SSH shell on routers. The shell has the full rights of the router account." }
+  ],
+  "permissions": [
+    { "id": "feature.router-ssh", "sensitive": true, "description": "Open SSH shells on routers that allow writing from Telemon. Every session is audited." }
+  ]
+}
