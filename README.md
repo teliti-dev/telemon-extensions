@@ -32,6 +32,14 @@ The app trusts a package only when it is signed by a key pinned in `OFFICIAL_KEY
 ## Release
 Create a GitHub release; the workflow attaches every `.tmx`, `catalog.json` and `catalog.json.sig` to it. The app reads the catalogue from the release assets.
 
+## Signing key
+The key is created and kept **inside GitHub Actions**; nothing is generated or copied by hand.
+1. Create a fine-grained personal access token with *Secrets: write* on this repository and *Variables: write* on `teliti-dev/telemon`, and save it here as the secret `KEY_SETUP_TOKEN`.
+2. Run the workflow **Setup signing key** (Actions tab). It generates the key, stores the private half as the secret `TMX_SIGNING_KEY` (never printed) and writes the public half to the Telemon repository variable `TELEMON_OFFICIAL_EXT_KEYS`.
+3. The next Telemon release compiles that public key into the app. Create a release here to publish signed packages and the catalogue.
+
+Good to know: the private key cannot be read back, and apps pin the public key when they are built. Losing the secret means running the workflow with *rotate* and releasing a new Telemon (the old public key stays trusted next to the new one until you remove it). `scripts/gen-signing-key.sh` is the manual alternative.
+
 ## Rules
 - Extensions add features; they never change core behaviour (ADR 0028).
 - Declare every permission and action in the manifest; sensitive permissions start off.

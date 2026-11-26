@@ -1,0 +1,80 @@
+name: Setup signing key
+
+# One-time, run by the owner from the Actions tab. Creates the official signing key INSIDE Actions:
+#   - the private key is stored as the repository secret TMX_SIGNING_KEY and never printed or saved anywhere else;
+#   - the public key is written to the Telemon repository variable TELEMON_OFFICIAL_EXT_KEYS, which the Telemon release
+#     workflow compiles into the app (so the app trusts packages signed by this key without any manual copying).
+# Needs the secret KEY_SETUP_TOKEN: a fine-grained personal access token with "Secrets: write" on this repository and
+# "Variables: write" on teliti-dev/telemon. The default GITHUB_TOKEN cannot write secrets or other repositories' variables.
+on:
+  workflow_dispatch:
+    inputs:
+      rotate:
+        description: "Replace an existing key. The old public key stays trusted next to the new one until you remove it."
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency: setup-signing-key
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the token
+        env:
+          KEY_SETUP_TOKEN: ${{ secrets.KEY_SETUP_TOKEN }}
+        run: |
+          if [ -z "$KEY_SETUP_TOKEN" ]; then
+            echo "::error::The secret KEY_SETUP_TOKEN is missing. See the README section 'Signing key'."
+            exit 1
+          fi
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check out Telemon (for the tmx tool)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: teliti-dev/telemon
+          ref: master
+          path: telemon
+      - name: Build tmx
+        run: cargo build --release --manifest-path telemon/crates/telemon-ext/Cargo.toml --bin tmx
+      - name: Refuse to overwrite an existing key
+        env:
+          GH_TOKEN: ${{ secrets.KEY_SETUP_TOKEN }}
+        run: |
+          if gh secret list --repo "$GITHUB_REPOSITORY" --json name --jq '.[].name' | grep -qx TMX_SIGNING_KEY; then
+            if [ "${{ inputs.rotate }}" != "true" ]; then
+              echo "::error::TMX_SIGNING_KEY already exists. Run again with 'rotate' only if you mean to replace it."
+              exit 1
+            fi
+            echo "Rotating the existing key."
+          fi
+      - name: Generate the key, store the secret, publish the public key
+        env:
+          GH_TOKEN: ${{ secrets.KEY_SETUP_TOKEN }}
+          TMX: ${{ github.workspace }}/telemon/crates/telemon-ext/target/release/tmx
+        run: |
+          set -euo pipefail
+          sec="$("$TMX" keygen)"
+          echo "::add-mask::$sec"
+          pub="$("$TMX" pubkey "$sec")"
+          old="$(gh variable get TELEMON_OFFICIAL_EXT_KEYS --repo teliti-dev/telemon 2>/dev/null || true)"
+          # A rotation keeps the old public key trusted (apps already installed pin it) until it is removed by hand.
+          if [ -n "$old" ] && [ "${{ inputs.rotate }}" = "true" ]; then value="$pub,$old"; else value="$pub"; fi
+          printf '%s' "$sec" | gh secret set TMX_SIGNING_KEY --repo "$GITHUB_REPOSITORY"
+          gh variable set TELEMON_OFFICIAL_EXT_KEYS --repo teliti-dev/telemon --body "$value"
+          unset sec
+          {
+            echo "### Official signing key ready"
+            echo
+            echo "- Secret \`TMX_SIGNING_KEY\` stored in this repository (write-only, not recoverable)."
+            echo "- Variable \`TELEMON_OFFICIAL_EXT_KEYS\` on teliti-dev/telemon set to:"
+            echo
+            echo "\`\`\`"
+            echo "$value" | tr ',' '\n'
+            echo "\`\`\`"
+            echo
+            echo "The next Telemon release compiles this key into the app. Create a release here to publish signed packages and the catalogue."
+          } >> "$GITHUB_STEP_SUMMARY"
