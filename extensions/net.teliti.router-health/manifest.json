@@ -1,9 +1,10 @@
 {
   "id": "net.teliti.router-health",
   "name": "Router health",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "apiVersion": 1,
   "publisher": "Teliti",
+  "license": {"kind": "open-source", "spdx": "AGPL-3.0-only", "url": "https://github.com/teliti-dev/telemon-extensions/blob/main/LICENSE", "summary": "Open source (AGPL-3.0). Free to use. Official extension by Teliti."},
   "description": "CPU, memory, uptime and version of every router, with a short history sampled every minute.",
   "telemon": ">=0.1.0",
   "ui": {

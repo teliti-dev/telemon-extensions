@@ -1,9 +1,10 @@
 {
   "id": "net.teliti.hello",
   "name": "Hello",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "apiVersion": 1,
   "publisher": "Teliti",
+  "license": {"kind": "open-source", "spdx": "AGPL-3.0-only", "url": "https://github.com/teliti-dev/telemon-extensions/blob/main/LICENSE", "summary": "Open source (AGPL-3.0). Free to use. Official extension by Teliti."},
   "description": "Example extension: one Overview widget and one page. Use it to check the loader, the permission toggles and the Access page.",
   "telemon": ">=0.1.0",
   "ui": { "entry": "ui/index.js" },

@@ -40,6 +40,11 @@ The key is created and kept **inside GitHub Actions**; nothing is generated or c
 
 Good to know: the private key cannot be read back, and apps pin the public key when they are built. Losing the secret means running the workflow with *rotate* and releasing a new Telemon (the old public key stays trusted next to the new one until you remove it). `scripts/gen-signing-key.sh` is the manual alternative.
 
+## Licenses
+Every extension declares its `license` in the manifest (`kind`, `spdx`, `url`, `summary`; see the Telemon wiki, *Writing extensions*). The official extensions here are open source under the AGPL-3.0 (see `LICENSE`).
+
+**Packages that carry `license` need Telemon 0.1.0-rc.12 or newer.** Older builds reject a manifest with an unknown field, so they cannot install or update these packages (the versions they already have keep working).
+
 ## Rules
 - Extensions add features; they never change core behaviour (ADR 0028).
 - Declare every permission and action in the manifest; sensitive permissions start off.
