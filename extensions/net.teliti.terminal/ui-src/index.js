@@ -57,7 +57,7 @@ export default {
             } catch {}
           } else term.write(new Uint8Array(e.data))
         }
-        ws.onclose = () => setNote((n) => n || (opened ? "Session closed." : "Could not open the session. Check that the host key is pinned and that your role may open terminals."))
+        ws.onclose = () => setNote((n) => n || (opened ? "Session closed." : "Could not open the session. Possible causes: the host key is not pinned, the router refused the account (it needs the ssh policy), SSH is off or blocked on the router, or you have reached the session limit."))
         term.onData((d) => ws.readyState === 1 && ws.send(enc.encode(d)))
         const resize = () => {
           fit.fit()
@@ -138,6 +138,17 @@ export default {
       useEffect(() => {
         getJson("/api/snapshot").then((d) => setRouters((d.routers || []).filter((r) => r.canWrite)), (e) => setErr(e.message))
       }, [])
+      // Penjelasan sebelum mencoba: tanpa izin extension atau akses peran, sesi pasti ditolak server.
+      const notice = []
+      if (!sdk.hasPermission("feature.router-ssh")) {
+        notice.push(h("p", { key: "perm", className: "rounded-md border border-destructive/50 p-3 text-sm", "data-testid": "term-perm-off" },
+          "The permission ", h("code", null, "feature.router-ssh"), " is off, so terminals cannot open. An administrator turns it on in ",
+          h("a", { href: "#/pengaturan/extension/net.teliti.terminal", className: "underline" }, "Settings > Extensions > Router terminal > Permissions"), "."))
+      }
+      if (sdk.accessLevel !== "update" || !sdk.can("terminal")) {
+        notice.push(h("p", { key: "role", className: "rounded-md border border-destructive/50 p-3 text-sm", "data-testid": "term-role-off" },
+          "Your role is not allowed to open terminals. An administrator gives the role the Edit level and the “Open terminals” action in the extension's Role access."))
+      }
       const body = () => {
         if (err) return h("p", { className: "text-sm text-destructive" }, err)
         if (!routers) return h("p", { className: "text-sm text-muted-foreground" }, "…")
@@ -149,7 +160,7 @@ export default {
             h("strong", null, r.name), h("span", { className: "text-muted-foreground" }, r.status),
             h("button", { className: "ml-auto rounded-md border px-3 py-1", onClick: () => setPick(r) }, "Connect"))))
       }
-      return h(Card, null, h(CardHeader, null, h(CardTitle, null, "Router terminal (SSH)")), h(CardContent, null, body()))
+      return h(Card, null, h(CardHeader, null, h(CardTitle, null, "Router terminal (SSH)")), h(CardContent, { className: "grid gap-3" }, notice, body()))
     }
 
     sdk.registerPage({ id: "home", Component: Page })
