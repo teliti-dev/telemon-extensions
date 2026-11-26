@@ -1,0 +1,22 @@
+{
+  "id": "net.teliti.hello",
+  "name": "Hello",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "publisher": "Teliti",
+  "description": "Example extension: one Overview widget and one page. Use it to check the loader, the permission toggles and the Access page.",
+  "telemon": ">=0.1.0",
+  "ui": { "entry": "ui/index.js" },
+  "contributes": {
+    "widgets": [{ "type": "hello", "title": "Hello from an extension", "description": "Example widget from the Hello extension." }],
+    "pages": [{ "id": "home", "title": "Hello", "kind": "dashboard" }]
+  },
+  "actions": [
+    { "id": "view-report", "label": "View report" },
+    { "id": "run", "label": "Run", "level": "update", "description": "Example action that needs Edit." }
+  ],
+  "permissions": [
+    { "id": "data.events", "description": "Read events (example)." },
+    { "id": "feature.ai", "sensitive": true, "description": "Let the AI use this extension (example)." }
+  ]
+}

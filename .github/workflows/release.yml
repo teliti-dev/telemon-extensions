@@ -1,0 +1,39 @@
+name: Release
+
+# Manual, or when a release is published. Builds the signed packages and the signed catalogue and attaches
+# them to the release. The signing key lives only in the Actions secret TMX_SIGNING_KEY.
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check out Telemon (for the tmx tool)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: teliti-dev/telemon
+          ref: master
+          path: telemon
+      - name: Build tmx
+        run: cargo build --release --manifest-path telemon/crates/telemon-ext/Cargo.toml --bin tmx
+      - name: Pack, sign and build the catalogue
+        env:
+          TMX_SIGNING_KEY: ${{ secrets.TMX_SIGNING_KEY }}
+          TMX: ${{ github.workspace }}/telemon/crates/telemon-ext/target/release/tmx
+        run: scripts/build.sh
+      - name: Attach to the release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" dist/* --clobber
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist
+          path: dist/
